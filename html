@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIGITAL HARDCORE · FORTUNE WHEEL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #0b0b0b;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', 'Courier', 'Lucida Sans Typewriter', monospace;
+            padding: 16px;
+            background-image: radial-gradient(circle at 20% 30%, #1e1e1e 0%, #000000 90%);
+        }
+
+        .hardcore-container {
+            max-width: 800px;
+            width: 100%;
+            background: #111;
+            border: 3px solid #f0f;
+            box-shadow: 0 0 30px #f0f4, 0 0 10px #0ff4, inset 0 0 20px #000;
+            padding: 24px 20px 40px;
+            border-radius: 0px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* glitch lines */
+        .hardcore-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 255, 0.05) 2px, rgba(255, 0, 255, 0.05) 4px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 8vw, 3.2rem);
+            font-weight: 900;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 4px 4px 0 #f0f, 8px 8px 0 #0ff, 0 0 20px #ff00ff;
+            margin-bottom: 8px;
+            word-break: break-word;
+            text-align: center;
+            font-family: 'Impact', 'Courier New', monospace;
+            transform: skewX(-5deg);
+        }
+
+        .subhead {
+            color: #0ff;
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border: 1px solid #f0f;
+            padding: 6px 18px;
+            margin-bottom: 24px;
+            background: #000;
+            box-shadow: 0 0 15px #0ff;
+            font-weight: bold;
+            transform: rotate(-1deg);
+        }
+
+        /* wheel wrapper */
+        .wheel-wrapper {
+            position: relative;
+            width: min(70vw, 400px);
+            height: min(70vw, 400px);
+            margin: 10px 0 20px;
+        }
+
+        canvas#wheelCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+            box-shadow: 0 0 0 6px #111, 0 0 0 10px #f0f, 0 0 30px #ff00ff, 0 0 60px #00ffff;
+            transition: box-shadow 0.1s;
+            background: #1a1a1a;
+        }
+
+        /* pointer */
+        .pointer {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.8rem;
+            filter: drop-shadow(0 0 8px #0ff) drop-shadow(0 0 16px #f0f);
+            z-index: 10;
+            line-height: 1;
+            text-shadow: 0 0 10px cyan;
+            pointer-events: none;
+            color: #fff;
+            rotate: 180deg;
+        }
+
+        /* spin button */
+        .spin-btn {
+            background: #000;
+            color: #f0f;
+            border: 3px solid #0ff;
+            font-size: 2rem;
+            font-weight: 900;
+            font-family: 'Impact', 'Courier New', monospace;
+            padding: 16px 50px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin: 16px 0 20px;
+            box-shadow: 0 0 20px #f0f, inset 0 0 10px #0ff;
+            transition: all 0.08s ease;
+            transform: skewX(-8deg);
+            text-shadow: 0 0 8px #ff00ff;
+            border-radius: 0px;
+        }
+
+        .spin-btn:hover {
+            background: #f0f;
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 40px #ff00ff, inset 0 0 20px #00ffff;
+            transform: skewX(-8deg) scale(1.02);
+        }
+
+        .spin-btn:active {
+            transform: skewX(-8deg) scale(0.96);
+            background: #0ff;
+            color: #000;
+            border-color: #f0f;
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #222;
+            color: #666;
+            border-color: #444;
+            box-shadow: none;
+            transform: skewX(-8deg) scale(0.98);
+        }
+
+        .status-panel {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 10px;
+            color: #0ff;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            border-top: 2px dashed #f0f;
+            padding-top: 18px;
+        }
+
+        .sound-tag {
+            background: #000;
+            border: 2px solid #f0f;
+            padding: 8px 16px;
+            box-shadow: 0 0 12px #f0f;
+            color: #fff;
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px #0ff;
+            min-width: 160px;
+            text-align: center;
+        }
+
+        .audio-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #0a0a0a;
+            padding: 8px 18px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 15px #0ff;
+        }
+
+        .led {
+            width: 16px;
+            height: 16px;
+            background: #f0f;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #f0f;
+            animation: pulse 0.8s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.3; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1.2); box-shadow: 0 0 30px #0ff; }
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            color: #555;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-align: center;
+            border-top: 1px solid #222;
+            padding-top: 16px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .footer-note span {
+            color: #f0f;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="hardcore-container">
+        <h1>DIGITAL HARDCORE</h1>
+        <div class="subhead">⚡ FORTUNE WHEEL ⚡</div>
+
+        <div class="wheel-wrapper">
+            <div class="pointer">▼</div>
+            <canvas id="wheelCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <button class="spin-btn" id="spinButton">SPIN</button>
+
+        <div class="status-panel">
+            <div class="sound-tag" id="soundDisplay">/// READY ///</div>
+            <div class="audio-indicator">
+                <div class="led"></div>
+                <span id="audioStatus">AUDIO ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <span>⛓️ GITHUB PAGES READY ⛓️</span> &nbsp;|&nbsp; BRUTAL SOUNDS &nbsp;|&nbsp; NO MERCY
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ----------------------------------------------
+            // DIGITAL HARDCORE FORTUNE WHEEL
+            // fully self-contained, no external files
+            // ----------------------------------------------
+
+            // ---------- SEGMENTS ----------
+            const SEGMENTS = [
+                { label: 'POWER NOISE', color: '#ff00ff' },      // magenta
+                { label: 'BREAKCORE', color: '#00ffff' },        // cyan
+                { label: 'DIGITAL PUNK', color: '#ffaa00' },     // orange
+                { label: 'HARDCORE', color: '#ff0055' },         // pinkish red
+                { label: 'GLITCH', color: '#aaff00' },           // acid green
+                { label: 'RAVE', color: '#aa00ff' },            // purple
+                { label: 'NOISE', color: '#ff5500' },           // orange-red
+                { label: 'SPEEDCORE', color: '#00ffaa' }         // teal
+            ];
+
+            const NUM_SEGMENTS = SEGMENTS.length;
+            const ANGLE_PER_SEGMENT = (Math.PI * 2) / NUM_SEGMENTS;
+
+            // ---------- CANVAS ----------
+            const canvas = document.getElementById('wheelCanvas');
+            const ctx = canvas.getContext('2d');
+            const spinBtn = document.getElementById('spinButton');
+            const soundDisplay = document.getElementById('soundDisplay');
+            const audioStatus = document.getElementById('audioStatus');
+
+            // ---------- STATE ----------
+            let currentRotation = 0;          // radians
+            let isSpinning = false;
+            let audioCtx = null;
+            let currentSoundName = '/// READY ///';
+
+            // ---------- AUDIO ENGINE (digital hardcore brutal) ----------
+            function initAudio() {
+                if (audioCtx) return;
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    audioStatus.textContent = 'AUDIO ARMED';
+                } catch (e) {
+                    audioStatus.textContent = 'AUDIO ERROR';
+                }
+            }
+
+            // helper: noise buffer
+            function createNoiseBuffer(duration = 0.5) {
+                const sampleRate = audioCtx.sampleRate;
+                const length = sampleRate * duration;
+                const buffer = audioCtx.createBuffer(1, length, sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                return buffer;
+            }
+
+            // ---- SOUND GENERATORS (pure digital hardcore chaos) ----
+
+            // 0: POWER NOISE — harsh distorted noise burst with low bitcrush feel
+            function playPowerNoise() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const noiseBuffer = createNoiseBuffer(0.35);
+                const source = audioCtx.createBufferSource();
+                source.buffer = noiseBuffer;
+
+                const distortion = audioCtx.createWaveShaper();
+                const curve = new Float32Array(1024);
+                for (let i = 0; i < 1024; i++) {
+                    const x = (i / 1023) * 2 - 1;
+                    curve[i] = Math.tanh(x * 8) * 0.9; // brutal drive
+                }
+                distortion.curve = curve;
+                distortion.oversample = '4x';
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.8, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1200;
+
+                source.connect(distortion);
+                distortion.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                source.start(now);
+                source.stop(now + 0.36);
+            }
+
+            // 1: BREAKCORE — fast chopped noise with square wave interplay
+            function playBreakcore() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+
+                // noise burst 1 (short)
+                const noise1 = audioCtx.createBufferSource();
+                noise1.buffer = createNoiseBuffer(0.08);
+                const gain1 = audioCtx.createGain();
+                gain1.gain.setValueAtTime(0.7, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                noise1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                noise1.start(now);
+                noise1.stop(now + 0.09);
+
+                // square osc (distorted)
+                const osc = audioCtx.createOscillator();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+                const oscGain = audioCtx.createGain();
+                oscGain.gain.setValueAtTime(0.6, now);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                const dist = audioCtx.createWaveShaper();
+                const curve = new Float32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    const x = (i / 255) * 2 - 1;
+                    curve[i] = Math.tanh(x * 5);
+                }
+                dist.curve = curve;
+                osc.connect(dist);
+                dist.connect(oscGain);
+                oscGain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.22);
+
+                // glitch noise 2 (late)
+                const noise2 = audioCtx.createBufferSource();
+                noise2.buffer = createNoiseBuffer(0.06);
+                const gain2 = audioCtx.createGain();
+                gain2.gain.setValueAtTime(0.5, now + 0.1);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                noise2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                noise2.start(now + 0.1);
+                noise2.stop(now + 0.21);
+            }
+
+            // 2: DIGITAL PUNK — chiptune-like detuned square + noise
+            function playDigitalPunk() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const freqs = [440, 554, 659, 880];
+                freqs.forEach((f, i) => {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.value = f * 1.02; // detune
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.15, now + i * 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.18 + i * 0.02);
+                    osc.connect(g);
+                    g.connect(audioCtx.destination);
+                    osc.start(now + i * 0.02);
+                    osc.stop(now + 0.2 + i * 0.02);
+                });
+                // noise snare
+                const snare = audioCtx.createBufferSource();
+                snare.buffer = createNoiseBuffer(0.07);
+                const snareGain = audioCtx.createGain();
+                snareGain.gain.setValueAtTime(0.4, now);
+                snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+                snare.connect(snareGain);
+                snareGain.connect(audioCtx.destination);
+                snare.start(now);
+                snare.stop(now + 0.08);
+            }
+
+            // 3: HARDCORE — distorted kick + screaming filter
+            function playHardcore() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                // kick
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(1.0, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                const dist = audioCtx.createWaveShaper();
+                const curve = new Float32Array(1024);
+                for (let i = 0; i < 1024; i++) {
+                    const x = (i / 1023) * 2 - 1;
+                    curve[i] = Math.tanh(x * 12);
+                }
+                dist.curve = curve;
+                osc.connect(dist);
+                dist.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.32);
+
+                // noise scream
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = createNoiseBuffer(0.25);
+                const nGain = audioCtx.createGain();
+                nGain.gain.setValueAtTime(0.6, now);
+                nGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                const bp = audioCtx.createBiquadFilter();
+                bp.type = 'bandpass';
+                bp.frequency.value = 1500;
+                bp.Q.value = 2;
+                noise.connect(bp);
+                bp.connect(nGain);
+                nGain.connect(audioCtx.destination);
+                noise.start(now);
+                noise.stop(now + 0.26);
+            }
+
+            // 4: GLITCH — random bitcrushed bleeps
+            function playGlitch() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                for (let i = 0; i < 6; i++) {
+                    const time = now + i * 0.04;
+                    const osc = audioCtx.createOscillator();
+                    osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
+                    osc.frequency.value = 300 + Math.random() * 2000;
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.2, time);
+                    g.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
+                    const dist = audioCtx.createWaveShaper();
+                    const curve = new Float32Array(64);
+                    for (let j = 0; j < 64; j++) {
+                        const x = (j / 63) * 2 - 1;
+                        curve[j] = Math.tanh(x * 20);
+                    }
+                    dist.curve = curve;
+                    osc.connect(dist);
+                    dist.connect(g);
+                    g.connect(audioCtx.destination);
+                    osc.start(time);
+                    osc.stop(time + 0.04);
+                }
+            }
+
+            // 5: RAVE — hoover-style / siren + offbeat
+            function playRave() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(1200, now + 0.3);
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0.35, now);
+                g.gain.linearRampToValueAtTime(0.5, now + 0.1);
+                g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, now);
+                filter.frequency.linearRampToValueAtTime(4000, now + 0.2);
+                osc.connect(filter);
+                filter.connect(g);
+                g.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.36);
+
+                // hi-hat
+                const hat = audioCtx.createBufferSource();
+                hat.buffer = createNoiseBuffer(0.05);
+                const hatGain = audioCtx.createGain();
+                hatGain.gain.setValueAtTime(0.4, now + 0.15);
+                hatGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                const hp = audioCtx.createBiquadFilter();
+                hp.type = 'highpass';
+                hp.frequency.value = 8000;
+                hat.connect(hp);
+                hp.connect(hatGain);
+                hatGain.connect(audioCtx.destination);
+                hat.start(now + 0.15);
+                hat.stop(now + 0.26);
+            }
+
+            // 6: NOISE — full harsh noise wall
+            function playNoise() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = createNoiseBuffer(0.45);
+                const dist = audioCtx.createWaveShaper();
+                const curve = new Float32Array(1024);
+                for (let i = 0; i < 1024; i++) {
+                    const x = (i / 1023) * 2 - 1;
+                    curve[i] = Math.tanh(x * 15);
+                }
+                dist.curve = curve;
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 2000;
+                filter.Q.value = 0.8;
+                noise.connect(dist);
+                dist.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+                noise.stop(now + 0.46);
+            }
+
+            // 7: SPEEDCORE — extremely fast blips (higher bpm feel)
+            function playSpeedcore() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                for (let i = 0; i < 12; i++) {
+                    const time = now + i * 0.025;
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.value = 800 + (i % 4) * 300 + Math.random() * 200;
+                    const g = audioCtx.createGain();
+                    g.gain.setValueAtTime(0.2, time);
+                    g.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+                    osc.connect(g);
+                    g.connect(audioCtx.destination);
+                    osc.start(time);
+                    osc.stop(time + 0.025);
+                }
+                // kick every 3rd
+                const kickOsc = audioCtx.createOscillator();
+                kickOsc.type = 'sine';
+                kickOsc.frequency.setValueAtTime(100, now);
+                kickOsc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                const kGain = audioCtx.createGain();
+                kGain.gain.setValueAtTime(0.9, now);
+                kGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                kickOsc.connect(kGain);
+                kGain.connect(audioCtx.destination);
+                kickOsc.start(now);
+                kickOsc.stop(now + 0.21);
+            }
+
+            // map segment index to sound function
+            const soundFunctions = [
+                playPowerNoise,
+                playBreakcore,
+                playDigitalPunk,
+                playHardcore,
+                playGlitch,
+                playRave,
+                playNoise,
+                playSpeedcore
+            ];
+
+            // ---------- PLAY SOUND BY INDEX ----------
+            function playSoundByIndex(index) {
+                if (!audioCtx) {
+                    initAudio();
+                }
+                if (!audioCtx) return;
+                // resume if suspended (browser policy)
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(() => {
+                        if (soundFunctions[index]) soundFunctions[index]();
+                    }).catch(() => {});
+                } else {
+                    if (soundFunctions[index]) soundFunctions[index]();
+                }
+                // update display
+                currentSoundName = SEGMENTS[index].label;
+                soundDisplay.textContent = `/// ${currentSoundName} ///`;
+            }
+
+            // ---------- DRAW WHEEL ----------
+            function drawWheel(rotation) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2 - 20;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // dark background
+                ctx.fillStyle = '#0a0a0a';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius + 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                // draw segments
+                for (let i = 0; i < NUM_SEGMENTS; i++) {
+                    const startAngle = i * ANGLE_PER_SEGMENT + rotation;
+                    const endAngle = startAngle + ANGLE_PER_SEGMENT;
+
+                    // segment fill
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.closePath();
+
+                    ctx.fillStyle = SEGMENTS[i].color;
+                    ctx.fill();
+
+                    // segment border (glitch style)
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // inner shine
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius * 0.85, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                    ctx.fill();
+
+                    // text
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(startAngle + ANGLE_PER_SEGMENT / 2);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = 'bold 20px "Courier New", monospace';
+                    ctx.fillStyle = '#000';
+                    ctx.shadowColor = '#fff';
+                    ctx.shadowBlur = 6;
+                    ctx.fillText(SEGMENTS[i].label, radius * 0.65, 0);
+                    ctx.restore();
+                }
+
+                // center cap (hardcore style)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 32, 0, Math.PI * 2);
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                ctx.strokeStyle = '#f0f';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+                ctx.fillStyle = '#0ff';
+                ctx.shadowColor = '#0ff';
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // ---------- SPIN LOGIC ----------
+            function spinWheel() {
+                if (isSpinning) return;
+                initAudio();
+                if (!audioCtx) return;
+
+                isSpinning = true;
+                spinBtn.disabled = true;
+                soundDisplay.textContent = '/// SPINNING... ///';
+
+                // pick random winning index
+                const winningIndex = Math.floor(Math.random() * NUM_SEGMENTS);
+
+                // calculate target rotation so that winning segment is under pointer
+                // pointer at top ( -PI/2 ). Segment i occupies [i*angle, (i+1)*angle] before rotation.
+                // we want winning segment center to point up: rotation = -PI/2 - (i+0.5)*angle
+                // plus add extra full spins
+                const baseRotation = -Math.PI / 2 - (winningIndex + 0.5) * ANGLE_PER_SEGMENT;
+                const extraSpins = 8 + Math.floor(Math.random() * 5); // 8-12 full spins
+                const totalRotation = baseRotation + extraSpins * Math.PI * 2;
+
+                const startRotation = currentRotation % (Math.PI * 2);
+                const endRotation = totalRotation;
+
+                const duration = 3000 + Math.random() * 1000; // 3-4 sec
+                const startTime = performance.now();
+
+                // easing function: easeOutCubic
+                function easeOutCubic(t) {
+                    return 1 - Math.pow(1 - t, 3);
+                }
+
+                function animateSpin(now) {
+                    const elapsed = now - startTime;
+                    let progress = Math.min(elapsed / duration, 1);
+                    const eased = easeOutCubic(progress);
+
+                    // interpolate rotation
+                    const current = startRotation + (endRotation - startRotation) * eased;
+                    currentRotation = current;
+                    drawWheel(currentRotation);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateSpin);
+                    } else {
+                        // spin complete
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        // ensure exact final rotation (avoid floating drift)
+                        currentRotation = endRotation;
+                        drawWheel(currentRotation);
+
+                        // play winning sound
+                        playSoundByIndex(winningIndex);
+                    }
+                }
+
+                requestAnimationFrame(animateSpin);
+            }
+
+            // ---------- INITIAL RENDER ----------
+            function init() {
+                // set rotation to a nice start position
+                currentRotation = -Math.PI / 2 - (0 + 0.5) * ANGLE_PER_SEGMENT; // segment 0 at top
+                drawWheel(currentRotation);
+                soundDisplay.textContent = '/// READY ///';
+
+                // set up audio context on first user interaction (browsers require gesture)
+                // but we create on spin anyway.
+                // Also resume on any click
+                window.addEventListener('click', function once() {
+                    initAudio();
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                }, { once: true });
+
+                // spin button listener
+                spinBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    spinWheel();
+                });
+
+                // touch / space etc
+                spinBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    spinWheel();
+                }, { passive: false });
+            }
+
+            // start everything
+            init();
+
+            // redraw on resize (canvas is fixed size but scale via CSS)
+            window.addEventListener('resize', () => {
+                drawWheel(currentRotation);
+            });
+        })();
+    </script>
+</body>
+</html>
